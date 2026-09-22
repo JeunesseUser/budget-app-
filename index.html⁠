@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Бюджет Руслана и Карины</title>
+    <!-- Подключаем Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; color: #333; }
+        .card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1, h2 { margin-top: 0; text-align: center; }
+        h1 { font-size: 22px; color: #1a1a1a; margin-bottom: 20px; }
+        h2 { font-size: 18px; color: #333; margin-bottom: 15px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: #f8f9fa; padding: 12px; border-radius: 12px; text-align: center; }
+        .stat-title { font-size: 11px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .stat-value { font-size: 16px; font-weight: 700; color: #212529; }
+        .savings-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px; border-radius: 12px; text-align: center; }
+        .savings-title { font-size: 13px; color: #2e7d32; font-weight: bold; margin-bottom: 5px; }
+        .savings-value { font-size: 28px; font-weight: 800; color: #1b5e20; }
+        .limit-box { background: #fff3e0; border: 1px solid #ffe0b2; padding: 15px; border-radius: 12px; text-align: center; margin-top: 10px; }
+        .limit-title { font-size: 13px; color: #e65100; font-weight: bold; margin-bottom: 5px; }
+        .limit-value { font-size: 20px; font-weight: 800; color: #ef6c00; }
+        
+        .input-group { margin-bottom: 12px; }
+        input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #dee2e6; box-sizing: border-box; font-size: 16px; background: #f8f9fa; }
+        input:focus { outline: none; border-color: #0d6efd; background: #fff; }
+        button { width: 100%; padding: 14px; border-radius: 10px; border: none; background: #0d6efd; color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:active { background: #0b5ed7; transform: scale(0.98); }
+        
+        .today-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f8f9fa; padding-bottom: 10px; margin-bottom: 10px; }
+        .today-total { color: #dc3545; font-weight: bold; font-size: 18px; }
+        .expense-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
+        .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f3f5; }
+        .expense-item:last-child { border-bottom: none; }
+        .expense-info { display: flex; flex-direction: column; }
+        .expense-desc { font-size: 15px; font-weight: 500; color: #212529; }
+        .expense-time { font-size: 12px; color: #adb5bd; margin-top: 3px; }
+        .expense-amount { font-size: 16px; font-weight: bold; color: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>Бюджет Руслана и Карины ❤️</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-title">Доход в месяц</div>
+                <div class="stat-value">13 600 zł</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title">Обязательные</div>
+                <div class="stat-value">5 310 zł</div>
+            </div>
+        </div>
+
+        <div class="savings-box">
+            <div class="savings-title">Откладываем в этом месяце:</div>
+            <div class="savings-value" id="savedAmount">8 290 zł</div>
+            <div style="font-size: 11px; color: #4caf50; margin-top: 5px;">(Сумма падает с каждой покупкой)</div>
+        </div>
+
+        <div class="limit-box">
+            <div class="limit-title">Ежедневный лимит на жизнь:</div>
+            <div class="limit-value">80 zł / день</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Добавить трату</h2>
+        <div class="input-group">
+            <input type="number" id="amount" placeholder="Сумма (например: 25.50)" inputmode="decimal">
+        </div>
+        <div class="input-group">
+            <input type="text" id="desc" placeholder="На что? (Biedronka, кофе, аптека)">
+        </div>
+        <button onclick="addExpense()">Записать расход</button>
+    </div>
+
+    <div class="card">
+        <div class="today-header">
+            <h2 style="margin:0;">Траты сегодня</h2>
+            <div class="today-total" id="todayTotal">0 zł</div>
+        </div>
+        <ul class="expense-list" id="expenseList">
+            <!-- Список -->
+        </ul>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDanghLH9BPyODbjjyNzXM9uQ24zSoIldw",
+            authDomain: "familybudget-72b3f.firebaseapp.com",
+            databaseURL: "https://familybudget-72b3f-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "familybudget-72b3f",
+            storageBucket: "familybudget-72b3f.firebasestorage.app",
+            messagingSenderId: "695095017936",
+            appId: "1:695095017936:web:5c8186d37ce049e1e4f9d5",
+            measurementId: "G-D6ZR9JN2Z5"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const totalIncome = 13600;
+        const fixedExpenses = 5310;
+        const remainingForMonth = totalIncome - fixedExpenses;
+        
+        function getMonthKey() {
+            const now = new Date();
+            return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+        }
+        function getDayKey() {
+            const now = new Date();
+            return String(now.getDate()).padStart(2, '0');
+        }
+
+        const monthKey = getMonthKey();
+        const dayKey = getDayKey();
+        const expensesRef = db.ref('expenses/' + monthKey);
+
+        expensesRef.on('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            let monthTotalSpent = 0;
+            let todayTotalSpent = 0;
+            
+            const listEl = document.getElementById('expenseList');
+            listEl.innerHTML = '';
+
+            for (const date in data) {
+                for (const id in data[date]) {
+                    const exp = data[date][id];
+                    monthTotalSpent += exp.amount;
+                    
+                    if (date === dayKey) {
+                        todayTotalSpent += exp.amount;
+                        const li = document.createElement('li');
+                        li.className = 'expense-item';
+                        li.innerHTML = `
+                            <div class="expense-info">
+                                <span class="expense-desc">${exp.desc || 'Без описания'}</span>
+                                <span class="expense-time">${exp.time}</span>
+                            </div>
+                            <div class="expense-amount">-${exp.amount} zł</div>
+                        `;
+                        listEl.insertBefore(li, listEl.firstChild);
+                    }
+                }
+            }
+
+            const currentSaved = (remainingForMonth - monthTotalSpent).toFixed(1);
+            document.getElementById('savedAmount').innerText = currentSaved + ' zł';
+            document.getElementById('todayTotal').innerText = todayTotalSpent.toFixed(1) + ' zł';
+            
+            if (todayTotalSpent > 80) {
+                document.getElementById('todayTotal').style.color = "#8b0000"; 
+            } else {
+                document.getElementById('todayTotal').style.color = "#dc3545"; 
+            }
+        });
+
+        function addExpense() {
+            const amountInput = document.getElementById('amount');
+            const descInput = document.getElementById('desc');
+            const amount = parseFloat(amountInput.value.replace(',', '.'));
+            const desc = descInput.value.trim();
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('Пожалуйста, введите корректную сумму');
+                return;
+            }
+
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+            db.ref('expenses/' + monthKey + '/' + dayKey).push({
+                amount: amount,
+                desc: desc,
+                time: timeStr
+            }).then(() => {
+                amountInput.value = '';
+                descInput.value = '';
+            }).catch((error) => {
+                alert('Ошибка сохранения: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>
