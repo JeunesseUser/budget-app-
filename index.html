@@ -4,93 +4,151 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Бюджет Руслана и Карины</title>
-    <!-- Подключаем Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; color: #333; }
-        .card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        h1, h2 { margin-top: 0; text-align: center; }
-        h1 { font-size: 22px; color: #1a1a1a; margin-bottom: 20px; }
-        h2 { font-size: 18px; color: #333; margin-bottom: 15px; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-box { background: #f8f9fa; padding: 12px; border-radius: 12px; text-align: center; }
-        .stat-title { font-size: 11px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-        .stat-value { font-size: 16px; font-weight: 700; color: #212529; }
-        .savings-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px; border-radius: 12px; text-align: center; }
-        .savings-title { font-size: 13px; color: #2e7d32; font-weight: bold; margin-bottom: 5px; }
-        .savings-value { font-size: 28px; font-weight: 800; color: #1b5e20; }
-        .limit-box { background: #fff3e0; border: 1px solid #ffe0b2; padding: 15px; border-radius: 12px; text-align: center; margin-top: 10px; }
-        .limit-title { font-size: 13px; color: #e65100; font-weight: bold; margin-bottom: 5px; }
-        .limit-value { font-size: 20px; font-weight: 800; color: #ef6c00; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; padding-bottom: 40px;}
+        .card { background: #fff; border-radius: 14px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        h1 { font-size: 20px; text-align: center; margin: 0 0 15px 0; }
+        h2 { font-size: 16px; margin: 0 0 12px 0; color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         
-        .input-group { margin-bottom: 12px; }
-        input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #dee2e6; box-sizing: border-box; font-size: 16px; background: #f8f9fa; }
-        input:focus { outline: none; border-color: #0d6efd; background: #fff; }
-        button { width: 100%; padding: 14px; border-radius: 10px; border: none; background: #0d6efd; color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:active { background: #0b5ed7; transform: scale(0.98); }
+        /* Вкладки месяцев */
+        .tabs { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
+        .tab-btn { flex: 1; min-width: 80px; padding: 10px 5px; background: #e9ecef; border: none; border-radius: 8px; font-weight: bold; color: #6c757d; cursor: pointer; font-size: 13px; text-align: center; }
+        .tab-btn.active { background: #0d6efd; color: white; }
+
+        /* Сетка настроек */
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 11px; color: #6c757d; font-weight: bold; margin-bottom: 3px; }
+        input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dee2e6; box-sizing: border-box; font-size: 14px; background: #f8f9fa; }
+        input:focus, select:focus { outline: none; border-color: #0d6efd; background: #fff; }
         
-        .today-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f8f9fa; padding-bottom: 10px; margin-bottom: 10px; }
-        .today-total { color: #dc3545; font-weight: bold; font-size: 18px; }
-        .expense-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
-        .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f3f5; }
-        .expense-item:last-child { border-bottom: none; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 5px; cursor: pointer;}
+        .btn-add { background: #0d6efd; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 5px; cursor: pointer; font-size: 16px;}
+        
+        /* Блоки итогов */
+        .summary-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 8px; }
+        .summary-box.plan { background: #e3f2fd; border-color: #bbdefb; }
+        .summary-title { font-size: 12px; font-weight: bold; color: #555; }
+        .summary-value { font-size: 22px; font-weight: 900; margin-top: 4px; }
+        .plan-text { color: #1565c0; }
+        .fact-text { color: #2e7d32; }
+        
+        /* Список категорий */
+        .cat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .cat-item { background: #f8f9fa; padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; font-size: 13px; }
+        .cat-name { font-weight: 500; }
+        .cat-sum { font-weight: bold; color: #dc3545; }
+
+        /* Список трат */
+        .expense-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f3f5; }
         .expense-info { display: flex; flex-direction: column; }
-        .expense-desc { font-size: 15px; font-weight: 500; color: #212529; }
-        .expense-time { font-size: 12px; color: #adb5bd; margin-top: 3px; }
-        .expense-amount { font-size: 16px; font-weight: bold; color: #dc3545; }
+        .e-desc { font-size: 14px; font-weight: bold; }
+        .e-cat { font-size: 11px; color: #6c757d; margin-top: 2px; }
+        .e-amount { font-size: 15px; font-weight: bold; color: #dc3545; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>Бюджет Руслана и Карины ❤️</h1>
-        
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-title">Доход в месяц</div>
-                <div class="stat-value">13 600 zł</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-title">Обязательные</div>
-                <div class="stat-value">5 310 zł</div>
-            </div>
-        </div>
+    <h1>Бюджет ❤️ Карины и Руслана</h1>
 
-        <div class="savings-box">
-            <div class="savings-title">Откладываем в этом месяце:</div>
-            <div class="savings-value" id="savedAmount">8 290 zł</div>
-            <div style="font-size: 11px; color: #4caf50; margin-top: 5px;">(Сумма падает с каждой покупкой)</div>
-        </div>
-
-        <div class="limit-box">
-            <div class="limit-title">Ежедневный лимит на жизнь:</div>
-            <div class="limit-value">80 zł / день</div>
-        </div>
+    <div class="tabs" id="tabsContainer">
+        <div class="tab-btn active" onclick="switchMonth('2026-09')">Сент. 26</div>
+        <div class="tab-btn" onclick="switchMonth('2026-10')">Окт. 26</div>
+        <div class="tab-btn" onclick="switchMonth('2026-11')">Нояб. 26</div>
+        <div class="tab-btn" onclick="switchMonth('2026-12')">Дек. 26</div>
     </div>
 
-    <div class="card">
+    <!-- Ввод расходов -->
+    <div class="card" style="border: 2px solid #0d6efd;">
         <h2>Добавить трату</h2>
-        <div class="input-group">
-            <input type="number" id="amount" placeholder="Сумма (например: 25.50)" inputmode="decimal">
+        <div class="settings-grid">
+            <div class="input-group">
+                <label>Сумма (zł)</label>
+                <input type="number" id="exAmount" placeholder="0.00" inputmode="decimal">
+            </div>
+            <div class="input-group">
+                <label>Категория</label>
+                <select id="exCategory">
+                    <option value="Продукты">Продукты</option>
+                    <option value="Сигареты">Сигареты</option>
+                    <option value="Одежда">Одежда</option>
+                    <option value="Кафе/Доставка">Кафе/Доставка</option>
+                    <option value="Транспорт">Транспорт</option>
+                    <option value="Прочее">Прочее</option>
+                </select>
+            </div>
         </div>
-        <div class="input-group">
-            <input type="text" id="desc" placeholder="На что? (Biedronka, кофе, аптека)">
+        <div class="input-group" style="margin-bottom: 8px;">
+            <label>Описание (необязательно)</label>
+            <input type="text" id="exDesc" placeholder="Например: Biedronka или Zara">
         </div>
-        <button onclick="addExpense()">Записать расход</button>
+        <button class="btn-add" onclick="addExpense()">Записать расход</button>
     </div>
 
+    <!-- Итоги месяца -->
     <div class="card">
-        <div class="today-header">
-            <h2 style="margin:0;">Траты сегодня</h2>
-            <div class="today-total" id="todayTotal">0 zł</div>
+        <h2>Сводка за месяц</h2>
+        <div class="summary-box plan">
+            <div class="summary-title">ПЛАН: Отложим в этом месяце</div>
+            <div class="summary-value plan-text" id="calcPlan">0 zł</div>
+            <div style="font-size:10px; color:#666; margin-top:3px;">Если тратить ровно лимит в день</div>
         </div>
-        <ul class="expense-list" id="expenseList">
-            <!-- Список -->
-        </ul>
+        
+        <div class="summary-box">
+            <div class="summary-title">ФАКТ: Сейчас в копилке</div>
+            <div class="summary-value fact-text" id="calcFact">0 zł</div>
+            <div style="font-size:10px; color:#666; margin-top:3px;">Остаток от зарплат минус все расходы</div>
+        </div>
+    </div>
+
+    <!-- Настройки месяца -->
+    <div class="card">
+        <h2>Настройки месяца (редактируемые)</h2>
+        <div class="settings-grid">
+            <div class="input-group">
+                <label>ЗП Руслана</label>
+                <input type="number" id="sRuslan" value="7600">
+            </div>
+            <div class="input-group">
+                <label>ЗП Карины</label>
+                <input type="number" id="sKarina" value="6000">
+            </div>
+            <div class="input-group">
+                <label>Обязательные платы</label>
+                <input type="number" id="sFixed" value="5310">
+            </div>
+            <div class="input-group">
+                <label>Лимит в день (реком.)</label>
+                <input type="number" id="sDaily" value="80">
+            </div>
+            <div class="input-group" style="grid-column: span 2;">
+                <label>На продукты раз в неделю (реком.)</label>
+                <input type="number" id="sWeekly" value="550">
+            </div>
+        </div>
+        <button class="btn-save" onclick="saveSettings()">Сохранить настройки</button>
+    </div>
+
+    <!-- Расходы по категориям -->
+    <div class="card">
+        <h2>Куда ушли деньги</h2>
+        <div class="cat-list" id="categoryTotals">
+            <!-- Сюда подставятся суммы по категориям -->
+        </div>
+    </div>
+
+    <!-- Все расходы списком -->
+    <div class="card">
+        <h2>Все траты за месяц</h2>
+        <div id="expenseList">
+            <!-- Список трат -->
+        </div>
     </div>
 
     <script>
+        // Подключение базы
         const firebaseConfig = {
             apiKey: "AIzaSyDanghLH9BPyODbjjyNzXM9uQ24zSoIldw",
             authDomain: "familybudget-72b3f.firebaseapp.com",
@@ -98,94 +156,161 @@
             projectId: "familybudget-72b3f",
             storageBucket: "familybudget-72b3f.firebasestorage.app",
             messagingSenderId: "695095017936",
-            appId: "1:695095017936:web:5c8186d37ce049e1e4f9d5",
-            measurementId: "G-D6ZR9JN2Z5"
+            appId: "1:695095017936:web:5c8186d37ce049e1e4f9d5"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const totalIncome = 13600;
-        const fixedExpenses = 5310;
-        const remainingForMonth = totalIncome - fixedExpenses;
-        
-        function getMonthKey() {
-            const now = new Date();
-            return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-        }
-        function getDayKey() {
-            const now = new Date();
-            return String(now.getDate()).padStart(2, '0');
-        }
+        let currentMonth = '2026-09';
+        let expensesListener = null;
+        let settingsListener = null;
 
-        const monthKey = getMonthKey();
-        const dayKey = getDayKey();
-        const expensesRef = db.ref('expenses/' + monthKey);
+        // Настройки по умолчанию
+        let mSettings = { ruslan: 7600, karina: 6000, fixed: 5310, daily: 80, weekly: 550 };
 
-        expensesRef.on('value', (snapshot) => {
-            const data = snapshot.val() || {};
-            let monthTotalSpent = 0;
-            let todayTotalSpent = 0;
+        function switchMonth(month) {
+            currentMonth = month;
             
-            const listEl = document.getElementById('expenseList');
-            listEl.innerHTML = '';
+            // Меняем активную вкладку визуально
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
 
-            for (const date in data) {
-                for (const id in data[date]) {
-                    const exp = data[date][id];
-                    monthTotalSpent += exp.amount;
+            // Отключаем старые прослушки базы
+            if(expensesListener) db.ref('expenses/' + currentMonth).off('value', expensesListener);
+            if(settingsListener) db.ref('settings/' + currentMonth).off('value', settingsListener);
+
+            loadData();
+        }
+
+        function loadData() {
+            // Грузим настройки
+            settingsListener = db.ref('settings/' + currentMonth).on('value', snap => {
+                const data = snap.val();
+                if (data) mSettings = data;
+                
+                document.getElementById('sRuslan').value = mSettings.ruslan;
+                document.getElementById('sKarina').value = mSettings.karina;
+                document.getElementById('sFixed').value = mSettings.fixed;
+                document.getElementById('sDaily').value = mSettings.daily;
+                document.getElementById('sWeekly').value = mSettings.weekly;
+                
+                recalculate();
+            });
+
+            // Грузим траты
+            expensesListener = db.ref('expenses/' + currentMonth).on('value', snap => {
+                const data = snap.val() || {};
+                let totalSpent = 0;
+                let catSums = { "Продукты": 0, "Сигареты": 0, "Одежда": 0, "Кафе/Доставка": 0, "Транспорт": 0, "Прочее": 0 };
+                
+                const listEl = document.getElementById('expenseList');
+                listEl.innerHTML = '';
+                
+                // Переворачиваем массив, чтобы новые были сверху
+                const sortedKeys = Object.keys(data).sort().reverse();
+                
+                sortedKeys.forEach(key => {
+                    const exp = data[key];
+                    totalSpent += exp.amount;
                     
-                    if (date === dayKey) {
-                        todayTotalSpent += exp.amount;
-                        const li = document.createElement('li');
-                        li.className = 'expense-item';
-                        li.innerHTML = `
+                    if(catSums[exp.category] !== undefined) {
+                        catSums[exp.category] += exp.amount;
+                    } else {
+                        catSums["Прочее"] += exp.amount;
+                    }
+
+                    listEl.innerHTML += `
+                        <div class="expense-item">
                             <div class="expense-info">
-                                <span class="expense-desc">${exp.desc || 'Без описания'}</span>
-                                <span class="expense-time">${exp.time}</span>
+                                <span class="e-desc">${exp.desc || exp.category}</span>
+                                <span class="e-cat">${exp.date} • ${exp.category}</span>
                             </div>
-                            <div class="expense-amount">-${exp.amount} zł</div>
+                            <div class="e-amount">-${exp.amount} zł</div>
+                        </div>
+                    `;
+                });
+
+                // Обновляем категории на экране
+                const catEl = document.getElementById('categoryTotals');
+                catEl.innerHTML = '';
+                for (let cat in catSums) {
+                    if(catSums[cat] > 0) {
+                        catEl.innerHTML += `
+                            <div class="cat-item">
+                                <span class="cat-name">${cat}</span>
+                                <span class="cat-sum">${catSums[cat]} zł</span>
+                            </div>
                         `;
-                        listEl.insertBefore(li, listEl.firstChild);
                     }
                 }
-            }
+                
+                // Сохраняем общую сумму трат в глобальную переменную для расчета
+                window.currentTotalSpent = totalSpent;
+                recalculate();
+            });
+        }
 
-            const currentSaved = (remainingForMonth - monthTotalSpent).toFixed(1);
-            document.getElementById('savedAmount').innerText = currentSaved + ' zł';
-            document.getElementById('todayTotal').innerText = todayTotalSpent.toFixed(1) + ' zł';
+        function recalculate() {
+            const income = Number(mSettings.ruslan) + Number(mSettings.karina);
+            const fixed = Number(mSettings.fixed);
+            const daily = Number(mSettings.daily);
+            const spent = window.currentTotalSpent || 0;
+
+            // Считаем дни в текущем месяце вкладки
+            const year = parseInt(currentMonth.split('-')[0]);
+            const monthNum = parseInt(currentMonth.split('-')[1]);
+            const daysInMonth = new Date(year, monthNum, 0).getDate();
+
+            // ПЛАН = Доход - Обязательные - (Дневной лимит * кол-во дней)
+            const planSaved = income - fixed - (daily * daysInMonth);
             
-            if (todayTotalSpent > 80) {
-                document.getElementById('todayTotal').style.color = "#8b0000"; 
-            } else {
-                document.getElementById('todayTotal').style.color = "#dc3545"; 
-            }
-        });
+            // ФАКТ = Доход - Обязательные - Уже потрачено по факту
+            const factSaved = income - fixed - spent;
+
+            document.getElementById('calcPlan').innerText = planSaved.toFixed(0) + ' zł';
+            document.getElementById('calcFact').innerText = factSaved.toFixed(1) + ' zł';
+        }
+
+        function saveSettings() {
+            const newSettings = {
+                ruslan: Number(document.getElementById('sRuslan').value),
+                karina: Number(document.getElementById('sKarina').value),
+                fixed: Number(document.getElementById('sFixed').value),
+                daily: Number(document.getElementById('sDaily').value),
+                weekly: Number(document.getElementById('sWeekly').value)
+            };
+            db.ref('settings/' + currentMonth).set(newSettings).then(() => {
+                alert('Настройки месяца сохранены!');
+            });
+        }
 
         function addExpense() {
-            const amountInput = document.getElementById('amount');
-            const descInput = document.getElementById('desc');
-            const amount = parseFloat(amountInput.value.replace(',', '.'));
-            const desc = descInput.value.trim();
+            const amount = parseFloat(document.getElementById('exAmount').value.replace(',', '.'));
+            const cat = document.getElementById('exCategory').value;
+            const desc = document.getElementById('exDesc').value.trim();
 
             if (isNaN(amount) || amount <= 0) {
-                alert('Пожалуйста, введите корректную сумму');
+                alert('Введите правильную сумму');
                 return;
             }
 
             const now = new Date();
-            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const dateStr = String(now.getDate()).padStart(2, '0') + '.' + String(now.getMonth()+1).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 
-            db.ref('expenses/' + monthKey + '/' + dayKey).push({
+            db.ref('expenses/' + currentMonth).push({
                 amount: amount,
+                category: cat,
                 desc: desc,
-                time: timeStr
+                date: dateStr,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                amountInput.value = '';
-                descInput.value = '';
-            }).catch((error) => {
-                alert('Ошибка сохранения: ' + error.message);
+                document.getElementById('exAmount').value = '';
+                document.getElementById('exDesc').value = '';
             });
         }
+
+        // Запуск при старте
+        loadData();
     </script>
 </body>
 </html>
