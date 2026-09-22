@@ -28,12 +28,13 @@
         .btn-add { background: #0d6efd; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 5px; cursor: pointer; font-size: 16px;}
         
         /* Блоки итогов */
-        .summary-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 8px; }
+        .summary-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 12px; border-radius: 10px; text-align: center; }
         .summary-box.plan { background: #e3f2fd; border-color: #bbdefb; }
-        .summary-title { font-size: 12px; font-weight: bold; color: #555; }
-        .summary-value { font-size: 22px; font-weight: 900; margin-top: 4px; }
-        .plan-text { color: #1565c0; }
-        .fact-text { color: #2e7d32; }
+        .summary-title { font-size: 11px; font-weight: bold; color: #555; }
+        .summary-value { font-size: 20px; font-weight: 900; margin-top: 4px; }
+        
+        .limit-box { background: #fff3e0; border: 1px solid #ffe0b2; padding: 15px; border-radius: 10px; margin-top: 10px; }
+        .limit-title { font-size: 13px; color: #e65100; font-weight: bold; text-align: center; margin-bottom: 10px; }
         
         /* Список категорий */
         .cat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -74,7 +75,7 @@
                     <option value="Продукты">Продукты</option>
                     <option value="Сигареты">Сигареты</option>
                     <option value="Одежда">Одежда</option>
-                    <option value="Кафе/Доставка">Кафе/Доставка</option>
+                    <option value="Развлечения">Развлечения</option>
                     <option value="Транспорт">Транспорт</option>
                     <option value="Прочее">Прочее</option>
                 </select>
@@ -87,48 +88,59 @@
         <button class="btn-add" onclick="addExpense()">Записать расход</button>
     </div>
 
-    <!-- Итоги месяца -->
+    <!-- Умная Сводка -->
     <div class="card">
-        <h2>Сводка за месяц</h2>
-        <div class="summary-box plan">
-            <div class="summary-title">ПЛАН: Отложим в этом месяце</div>
-            <div class="summary-value plan-text" id="calcPlan">0 zł</div>
-            <div style="font-size:10px; color:#666; margin-top:3px;">Если тратить ровно лимит в день</div>
+        <h2>Сводка (цель и лимиты)</h2>
+        <div class="settings-grid">
+            <div class="summary-box">
+                <div class="summary-title">ФАКТ В БАНКЕ</div>
+                <div class="summary-value" style="color: #2e7d32;" id="calcBank">0 zł</div>
+                <div style="font-size:10px; color:#666; margin-top:3px;">Остаток от ЗП</div>
+            </div>
+            <div class="summary-box plan">
+                <div class="summary-title">ЦЕЛЬ ОТЛОЖИТЬ</div>
+                <div class="summary-value" style="color: #1565c0;" id="calcTarget">0 zł</div>
+                <div style="font-size:10px; color:#666; margin-top:3px;">Ваш план сбережений</div>
+            </div>
         </div>
-        
-        <div class="summary-box">
-            <div class="summary-title">ФАКТ: Сейчас в копилке</div>
-            <div class="summary-value fact-text" id="calcFact">0 zł</div>
-            <div style="font-size:10px; color:#666; margin-top:3px;">Остаток от зарплат минус все расходы</div>
+
+        <div class="limit-box">
+            <div class="limit-title">До 9 числа осталось <span id="daysLeftText">0</span> дн. Можно тратить:</div>
+            <div style="display:flex; justify-content: space-between;">
+                <div style="text-align:center; flex:1; border-right: 1px solid #ffe0b2;">
+                    <div style="font-size:11px; color:#666; font-weight:bold;">В ДЕНЬ</div>
+                    <div style="font-size:22px; font-weight:900; color:#ef6c00;" id="calcDaily">0 zł</div>
+                </div>
+                <div style="text-align:center; flex:1;">
+                    <div style="font-size:11px; color:#666; font-weight:bold;">В НЕДЕЛЮ (ПРОДУКТЫ)</div>
+                    <div style="font-size:22px; font-weight:900; color:#e65100;" id="calcWeekly">0 zł</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Настройки месяца -->
     <div class="card">
-        <h2>Настройки месяца (редактируемые)</h2>
+        <h2>Настройки месяца</h2>
         <div class="settings-grid">
             <div class="input-group">
                 <label>ЗП Руслана</label>
-                <input type="number" id="sRuslan" value="7600">
+                <input type="number" id="sRuslan">
             </div>
             <div class="input-group">
                 <label>ЗП Карины</label>
-                <input type="number" id="sKarina" value="6000">
+                <input type="number" id="sKarina">
             </div>
             <div class="input-group">
                 <label>Обязательные платы</label>
-                <input type="number" id="sFixed" value="5310">
+                <input type="number" id="sFixed">
             </div>
             <div class="input-group">
-                <label>Лимит в день (реком.)</label>
-                <input type="number" id="sDaily" value="80">
-            </div>
-            <div class="input-group" style="grid-column: span 2;">
-                <label>На продукты раз в неделю (реком.)</label>
-                <input type="number" id="sWeekly" value="550">
+                <label style="color:#0d6efd;">ХОЧУ ОТЛОЖИТЬ (zł)</label>
+                <input type="number" id="sTarget" style="border-color:#0d6efd; font-weight:bold;">
             </div>
         </div>
-        <button class="btn-save" onclick="saveSettings()">Сохранить настройки</button>
+        <button class="btn-save" onclick="saveSettings()">Сохранить и пересчитать</button>
     </div>
 
     <!-- Расходы по категориям -->
@@ -148,7 +160,6 @@
     </div>
 
     <script>
-        // Подключение базы
         const firebaseConfig = {
             apiKey: "AIzaSyDanghLH9BPyODbjjyNzXM9uQ24zSoIldw",
             authDomain: "familybudget-72b3f.firebaseapp.com",
@@ -165,17 +176,13 @@
         let expensesListener = null;
         let settingsListener = null;
 
-        // Настройки по умолчанию
-        let mSettings = { ruslan: 7600, karina: 6000, fixed: 5310, daily: 80, weekly: 550 };
+        let mSettings = { ruslan: 7600, karina: 6000, fixed: 5310, target: 2000 };
 
         function switchMonth(month) {
             currentMonth = month;
-            
-            // Меняем активную вкладку визуально
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
 
-            // Отключаем старые прослушки базы
             if(expensesListener) db.ref('expenses/' + currentMonth).off('value', expensesListener);
             if(settingsListener) db.ref('settings/' + currentMonth).off('value', settingsListener);
 
@@ -183,30 +190,31 @@
         }
 
         function loadData() {
-            // Грузим настройки
             settingsListener = db.ref('settings/' + currentMonth).on('value', snap => {
-                const data = snap.val();
-                if (data) mSettings = data;
+                const data = snap.val() || {};
+                
+                // Загружаем настройки, если их нет - ставим дефолтные
+                mSettings.ruslan = data.ruslan !== undefined ? data.ruslan : 7600;
+                mSettings.karina = data.karina !== undefined ? data.karina : 6000;
+                mSettings.fixed = data.fixed !== undefined ? data.fixed : 5310;
+                mSettings.target = data.target !== undefined ? data.target : 2000;
                 
                 document.getElementById('sRuslan').value = mSettings.ruslan;
                 document.getElementById('sKarina').value = mSettings.karina;
                 document.getElementById('sFixed').value = mSettings.fixed;
-                document.getElementById('sDaily').value = mSettings.daily;
-                document.getElementById('sWeekly').value = mSettings.weekly;
+                document.getElementById('sTarget').value = mSettings.target;
                 
                 recalculate();
             });
 
-            // Грузим траты
             expensesListener = db.ref('expenses/' + currentMonth).on('value', snap => {
                 const data = snap.val() || {};
                 let totalSpent = 0;
-                let catSums = { "Продукты": 0, "Сигареты": 0, "Одежда": 0, "Кафе/Доставка": 0, "Транспорт": 0, "Прочее": 0 };
+                let catSums = { "Продукты": 0, "Сигареты": 0, "Одежда": 0, "Развлечения": 0, "Транспорт": 0, "Прочее": 0 };
                 
                 const listEl = document.getElementById('expenseList');
                 listEl.innerHTML = '';
                 
-                // Переворачиваем массив, чтобы новые были сверху
                 const sortedKeys = Object.keys(data).sort().reverse();
                 
                 sortedKeys.forEach(key => {
@@ -230,7 +238,6 @@
                     `;
                 });
 
-                // Обновляем категории на экране
                 const catEl = document.getElementById('categoryTotals');
                 catEl.innerHTML = '';
                 for (let cat in catSums) {
@@ -238,13 +245,12 @@
                         catEl.innerHTML += `
                             <div class="cat-item">
                                 <span class="cat-name">${cat}</span>
-                                <span class="cat-sum">${catSums[cat]} zł</span>
+                                <span class="cat-sum">${catSums[cat].toFixed(1)} zł</span>
                             </div>
                         `;
                     }
                 }
                 
-                // Сохраняем общую сумму трат в глобальную переменную для расчета
                 window.currentTotalSpent = totalSpent;
                 recalculate();
             });
@@ -253,22 +259,38 @@
         function recalculate() {
             const income = Number(mSettings.ruslan) + Number(mSettings.karina);
             const fixed = Number(mSettings.fixed);
-            const daily = Number(mSettings.daily);
+            const target = Number(mSettings.target);
             const spent = window.currentTotalSpent || 0;
 
-            // Считаем дни в текущем месяце вкладки
-            const year = parseInt(currentMonth.split('-')[0]);
-            const monthNum = parseInt(currentMonth.split('-')[1]);
-            const daysInMonth = new Date(year, monthNum, 0).getDate();
+            // Считаем остаток в банке
+            const factBank = income - fixed - spent;
 
-            // ПЛАН = Доход - Обязательные - (Дневной лимит * кол-во дней)
-            const planSaved = income - fixed - (daily * daysInMonth);
+            // Считаем дни до 9 числа следующего месяца (относительно выбранной вкладки)
+            const tabYear = parseInt(currentMonth.split('-')[0]);
+            const tabMonth = parseInt(currentMonth.split('-')[1]) - 1; 
+            const targetDate = new Date(tabYear, tabMonth + 1, 9); // 9 число следующего месяца
+            targetDate.setHours(0,0,0,0);
             
-            // ФАКТ = Доход - Обязательные - Уже потрачено по факту
-            const factSaved = income - fixed - spent;
+            const today = new Date();
+            today.setHours(0,0,0,0);
 
-            document.getElementById('calcPlan').innerText = planSaved.toFixed(0) + ' zł';
-            document.getElementById('calcFact').innerText = factSaved.toFixed(1) + ' zł';
+            let daysLeft = Math.round((targetDate - today) / 86400000);
+            
+            // Если дни ушли в минус (смотрим прошлые месяцы), ставим 1 день для корректной математики
+            if (daysLeft < 1) daysLeft = 1;
+
+            // Вычисляем сколько денег свободно для трат
+            let availableForLife = factBank - target;
+            if (availableForLife < 0) availableForLife = 0; // Если перетратили, лимит 0
+
+            const dailyLimit = availableForLife / daysLeft;
+            const weeklyLimit = dailyLimit * 7;
+
+            document.getElementById('calcBank').innerText = factBank.toFixed(1) + ' zł';
+            document.getElementById('calcTarget').innerText = target.toFixed(0) + ' zł';
+            document.getElementById('daysLeftText').innerText = daysLeft;
+            document.getElementById('calcDaily').innerText = dailyLimit.toFixed(1) + ' zł';
+            document.getElementById('calcWeekly').innerText = weeklyLimit.toFixed(0) + ' zł';
         }
 
         function saveSettings() {
@@ -276,11 +298,10 @@
                 ruslan: Number(document.getElementById('sRuslan').value),
                 karina: Number(document.getElementById('sKarina').value),
                 fixed: Number(document.getElementById('sFixed').value),
-                daily: Number(document.getElementById('sDaily').value),
-                weekly: Number(document.getElementById('sWeekly').value)
+                target: Number(document.getElementById('sTarget').value)
             };
             db.ref('settings/' + currentMonth).set(newSettings).then(() => {
-                alert('Настройки месяца сохранены!');
+                alert('План обновлен! Лимиты пересчитаны.');
             });
         }
 
@@ -309,7 +330,6 @@
             });
         }
 
-        // Запуск при старте
         loadData();
     </script>
 </body>
